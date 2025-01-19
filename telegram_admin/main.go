@@ -133,7 +133,7 @@ func main() {
 
 			log.Printf(string(output))
 
-			prefixText := "\njq found\ndon't forget to share misc/customgeo4hiddify.txt or misc/customgeo4nekoray.txt as well\nhere is your link:\n"
+			prefixText := "jq found\ndon't forget to share misc/customgeo4hiddify.txt or misc/customgeo4nekoray.txt as well\nhere is your link:\n"
 
 			textMessage := strings.TrimPrefix(string(output), prefixText)
 			// Отправляем результат выполнения команды обратно в Telegram

@@ -1,0 +1,87 @@
+package main
+
+import (
+	"log"
+	"os"
+	"os/exec"
+	"strconv"
+
+	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/joho/godotenv"
+)
+
+func main() {
+	// Загружаем переменные из файла .env
+	if err := godotenv.Load(); err != nil {
+		log.Panic("Error loading .env file")
+	}
+
+	// Получаем токен и разрешенный ID пользователя из .env
+	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+	if botToken == "" {
+		log.Panic("TELEGRAM_BOT_TOKEN is not set in .env file")
+	}
+
+	allowedUserIDStr := os.Getenv("ALLOWED_TELEGRAM_USER_ID")
+	if allowedUserIDStr == "" {
+		log.Panic("ALLOWED_TELEGRAM_USER_ID is not set in .env file")
+	}
+
+	allowedUserID, err := strconv.Atoi(allowedUserIDStr)
+	if err != nil {
+		log.Panic("Invalid ALLOWED_TELEGRAM_USER_ID in .env file: must be an integer")
+	}
+
+	// Создаем бота
+	bot, err := tgbotapi.NewBotAPI(botToken)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	log.Printf("Authorized on account %s", bot.Self.UserName)
+
+	// Получаем обновления от Telegram
+	updateConfig := tgbotapi.NewUpdate(0)
+	updateConfig.Timeout = 60
+
+	updates := bot.GetUpdatesChan(updateConfig)
+
+	for update := range updates {
+		if update.Message == nil { // игнорируем любые обновления, которые не являются сообщениями
+			continue
+		}
+
+		// Проверяем, что сообщение отправлено разрешенным пользователем
+		if update.Message.From.ID != int64(allowedUserID) {
+			log.Printf("Unauthorized user: %d", update.Message.From.ID)
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Access denied.")
+			_, err := bot.Send(msg)
+			if err != nil {
+				return
+			}
+			continue
+		}
+
+		log.Printf("[Received] From: %d, Command: %s", update.Message.From.ID, update.Message.Text)
+
+		// Выполняем команду из текста сообщения
+		cmd := exec.Command("bash", "-c", update.Message.Text)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			// Если произошла ошибка при выполнении команды, отправляем ее обратно
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
+			_, err := bot.Send(msg)
+			if err != nil {
+				return
+			}
+			continue
+		}
+
+		// Отправляем результат выполнения команды обратно в Telegram
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(output))
+		_, err = bot.Send(msg)
+		if err != nil {
+			return
+		}
+	}
+}

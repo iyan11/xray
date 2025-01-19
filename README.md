@@ -1,8 +1,10 @@
-# easy-xray
+# xray
 
 *Script for Linux which makes XRay management easy*
 
-[Readme in Russian](README.ru.md) [(todo) Readme in Chinese](README.cn.md)
+Это fork от https://github.com/EvgenyNerush/easy-xray
+
+[Readme in Russian](README.ru.md)
 
 [XRay (aka ProjectX)](https://xtls.github.io/en/) is a frontier solution to circumvent the internet censorship. XRay allows to guide traffic
 through a server (VPS) outside the region of censorship as a proxie, but connection to xray server looks for authorities as a typical

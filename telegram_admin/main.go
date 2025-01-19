@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -66,44 +67,20 @@ func main() {
 
 		log.Printf("[Received] From: %d, Command: %s", update.Message.From.ID, update.Message.Text)
 
-		if update.Message.Text == "/start" {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Welcome to the bot!")
-			_, err := bot.Send(msg)
-			if err != nil {
-				log.Printf("Error sending message: %v", err)
-			}
+		if update.Message.Text == "/start" || update.Message.Text == "/help" {
+			text := "Добро пожаловать!  Команды:  - /add user <username>  - /link user <username>  - /del user <username>  - /users"
+			sendMessage(bot, update.Message.Chat.ID, text)
 			continue
-		}
-
-		// Проверяем, что команда начинается с /add user
-		if strings.HasPrefix(update.Message.Text, "/add user ") {
+		} else if strings.HasPrefix(update.Message.Text, "/add user ") {
 			// Извлекаем username из команды
 			username := strings.TrimPrefix(update.Message.Text, "/add user ")
 
+			command := "echo Adding Xray user: " + username + " && cd /root/xray && bash ex.sh add " + username + " && echo Xray user " + username + " added"
 			// Выполняем команду с переданным username
-			cmd := exec.Command("bash", "-c", "echo Adding Xray user: "+username+" && cd /root/xray && bash ex.sh add "+username+" && echo Xray user "+username+" added") // Здесь замените на вашу команду
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				// Если произошла ошибка при выполнении команды, отправляем ее обратно
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
-				_, err := bot.Send(msg)
-				if err != nil {
-					log.Printf("Error sending message: %v", err)
-				}
-				continue
-			}
+			sendCommand(bot, update.Message.Chat.ID, command)
 
-			cmd = exec.Command("bash", "-c", "cd /root/xray && bash ex.sh  link conf/config_client_"+username+".json") // Здесь замените на вашу команду
-			output, err = cmd.CombinedOutput()
-			if err != nil {
-				// Если произошла ошибка при выполнении команды, отправляем ее обратно
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
-				_, err := bot.Send(msg)
-				if err != nil {
-					log.Printf("Error sending message: %v", err)
-				}
-				continue
-			}
+			command = "cd /root/xray && bash ex.sh  link conf/config_client_" + username + ".json"
+			output := sendCommand(bot, update.Message.Chat.ID, command)
 
 			// Ищем индекс начала строки "vless://"
 			startIndex := strings.Index(string(output), "vless://")
@@ -111,37 +88,17 @@ func main() {
 				fmt.Println("Prefix 'vless://' not found.")
 				continue
 			}
-
 			// Извлекаем строку начиная с "vless://"
-			textMessage := string(output)[startIndex:]
-			// Отправляем результат выполнения команды обратно в Telegram
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ссылка пользователя: `"+textMessage+"`")
-			msg.ParseMode = "markdown"
-			_, err = bot.Send(msg)
-			if err != nil {
-				log.Printf("Error sending message: %v", err)
-			}
-			_, err = bot.Send(msg)
-			if err != nil {
-				log.Printf("Error sending message: %v", err)
-			}
-		}
+			textMessage := "Ссылка пользователя:  `" + string(output)[startIndex:] + "`"
 
-		if strings.HasPrefix(update.Message.Text, "/link user ") {
+			sendMessage(bot, update.Message.Chat.ID, textMessage)
+
+		} else if strings.HasPrefix(update.Message.Text, "/link user ") {
 			// Извлекаем username из команды
 			username := strings.TrimPrefix(update.Message.Text, "/link user ")
 
-			cmd := exec.Command("bash", "-c", "cd /root/xray && bash ex.sh  link conf/config_client_"+username+".json") // Здесь замените на вашу команду
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				// Если произошла ошибка при выполнении команды, отправляем ее обратно
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
-				_, err := bot.Send(msg)
-				if err != nil {
-					log.Printf("Error sending message: %v", err)
-				}
-				continue
-			}
+			command := "cd /root/xray && bash ex.sh  link conf/config_client_" + username + ".json"
+			output := sendCommand(bot, update.Message.Chat.ID, command)
 
 			// Ищем индекс начала строки "vless://"
 			startIndex := strings.Index(string(output), "vless://")
@@ -149,36 +106,65 @@ func main() {
 				fmt.Println("Prefix 'vless://' not found.")
 				continue
 			}
-
 			// Извлекаем строку начиная с "vless://"
-			textMessage := string(output)[startIndex:]
-			// Отправляем результат выполнения команды обратно в Telegram
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ссылка пользователя: `"+textMessage+"`")
-			msg.ParseMode = "markdown"
-			_, err = bot.Send(msg)
-			if err != nil {
-				log.Printf("Error sending message: %v", err)
+			textMessage := "Ссылка пользователя:  `" + string(output)[startIndex:] + "`"
+
+			sendMessage(bot, update.Message.Chat.ID, textMessage)
+		} else if strings.HasPrefix(update.Message.Text, "/del user ") {
+			// Извлекаем username из команды
+			username := strings.TrimPrefix(update.Message.Text, "/del user ")
+
+			command := "echo Deleting Xray user: " + username + " && cd /root/xray && bash ex.sh del " + username + " && echo Xray user " + username + " deleted"
+			output := sendCommand(bot, update.Message.Chat.ID, command)
+			if output != nil {
+				sendMessage(bot, update.Message.Chat.ID, string(output))
+			}
+		} else if update.Message.Text == "/users" {
+			command := "ls /root/xray/conf"
+			output := sendCommand(bot, update.Message.Chat.ID, command)
+			// Регулярное выражение для поиска нужных частей
+			re := regexp.MustCompile(`config_client_([a-zA-Z0-9_]+)_.*\.json`)
+
+			// Находим все совпадения
+			matches := re.FindAllStringSubmatch(string(output), -1)
+
+			// Создаем список в формате Markdown
+			var result []string
+			for _, match := range matches {
+				// match[1] — это захваченная часть, которая содержит нужное имя
+				result = append(result, "- "+match[1])
+			}
+
+			sendMessage(bot, update.Message.Chat.ID, strings.Join(result, "\n"))
+		} else {
+			output := sendCommand(bot, update.Message.Chat.ID, update.Message.Text)
+			if output != nil {
+				sendMessage(bot, update.Message.Chat.ID, string(output))
 			}
 		}
+	}
+}
 
-		// Выполняем команду из текста сообщения
-		cmd := exec.Command("bash", "-c", update.Message.Text)
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			// Если произошла ошибка при выполнении команды, отправляем ее обратно
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
-			_, err := bot.Send(msg)
-			if err != nil {
-				log.Printf("Error sending message: %v", err)
-			}
-			continue
-		}
+func sendMessage(bot *tgbotapi.BotAPI, chatID int64, text string) {
+	msg := tgbotapi.NewMessage(chatID, text)
+	_, err := bot.Send(msg)
+	if err != nil {
+		log.Printf("Error sending message: %v", err)
+	}
+}
 
-		// Отправляем результат выполнения команды обратно в Telegram
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(output))
-		_, err = bot.Send(msg)
+func sendCommand(bot *tgbotapi.BotAPI, chatID int64, command string) []byte {
+	cmd := exec.Command("bash", "-c", command)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Если произошла ошибка при выполнении команды, отправляем ее обратно
+		msg := tgbotapi.NewMessage(chatID, "Error: "+err.Error())
+		_, err := bot.Send(msg)
 		if err != nil {
 			log.Printf("Error sending message: %v", err)
 		}
+		return nil
 	}
+
+	return output
 }

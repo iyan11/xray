@@ -104,7 +104,7 @@
             // extra domains that are used by domestic sites, see https://github.com/EvgenyNerush/coherence-grabber/tree/main
             "ext:customgeo.dat:coherence-extra"
         ],
-        "outboundTag": "block"
+        "outboundTag": "direct"
       },
       {
         "type": "field",
@@ -114,7 +114,7 @@
             "geoip:by",
             "geoip:ir"
         ],
-        "outboundTag": "block"
+        "outboundTag": "direct"
       }
     ]
   },

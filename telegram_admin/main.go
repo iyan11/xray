@@ -104,8 +104,12 @@ func main() {
 				}
 				continue
 			}
+
+			prefixText := "[0;32mjq found [0m\n [0;33mdon't forget to share misc/customgeo4hiddify.txt or misc/customgeo4nekoray.txt as well\n [0;32mhere is your link: [0m"
+
+			textMessage := strings.TrimPrefix(string(output), prefixText)
 			// Отправляем результат выполнения команды обратно в Telegram
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(output))
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ссылка пользователя: `"+textMessage+"`")
 			_, err = bot.Send(msg)
 			if err != nil {
 				log.Printf("Error sending message: %v", err)

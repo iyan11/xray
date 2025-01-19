@@ -117,7 +117,7 @@ func main() {
 
 		if strings.HasPrefix(update.Message.Text, "/link user ") {
 			// Извлекаем username из команды
-			username := strings.TrimPrefix(update.Message.Text, "/add user ")
+			username := strings.TrimPrefix(update.Message.Text, "/link user ")
 
 			cmd := exec.Command("bash", "-c", "cd /root/xray && bash ex.sh  link conf/config_client_"+username+".json") // Здесь замените на вашу команду
 			output, err := cmd.CombinedOutput()

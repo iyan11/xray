@@ -92,7 +92,6 @@ func main() {
 				continue
 			}
 
-			//
 			cmd = exec.Command("bash", "-c", "cd /root/xray && bash ex.sh  link conf/config_client_"+username+".json") // Здесь замените на вашу команду
 			output, err = cmd.CombinedOutput()
 			if err != nil {
@@ -104,6 +103,35 @@ func main() {
 				}
 				continue
 			}
+
+			prefixText := "[0;32mjq found [0m\n [0;33mdon't forget to share misc/customgeo4hiddify.txt or misc/customgeo4nekoray.txt as well\n [0;32mhere is your link: [0m"
+
+			textMessage := strings.TrimPrefix(string(output), prefixText)
+			// Отправляем результат выполнения команды обратно в Telegram
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ссылка пользователя: `"+textMessage+"`")
+			_, err = bot.Send(msg)
+			if err != nil {
+				log.Printf("Error sending message: %v", err)
+			}
+		}
+
+		if strings.HasPrefix(update.Message.Text, "/link user ") {
+			// Извлекаем username из команды
+			username := strings.TrimPrefix(update.Message.Text, "/add user ")
+
+			cmd := exec.Command("bash", "-c", "cd /root/xray && bash ex.sh  link conf/config_client_"+username+".json") // Здесь замените на вашу команду
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				// Если произошла ошибка при выполнении команды, отправляем ее обратно
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
+				_, err := bot.Send(msg)
+				if err != nil {
+					log.Printf("Error sending message: %v", err)
+				}
+				continue
+			}
+
+			log.Printf(string(output))
 
 			prefixText := "[0;32mjq found [0m\n [0;33mdon't forget to share misc/customgeo4hiddify.txt or misc/customgeo4nekoray.txt as well\n [0;32mhere is your link: [0m"
 

@@ -512,6 +512,7 @@ then
 sudo ./ex.sh install${normal}"
         exit 1
     fi
+    sudo apt install jq
     #
     if command -v xray > /dev/null # xray already installed
     then

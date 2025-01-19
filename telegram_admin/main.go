@@ -123,7 +123,7 @@ func main() {
 			command := "ls /root/xray/conf"
 			output := sendCommand(bot, update.Message.Chat.ID, command)
 			// Регулярное выражение для поиска нужных частей
-			re := regexp.MustCompile(`config_client_([a-zA-Z0-9_]+)_.*\.json`)
+			re := regexp.MustCompile(`config_client_([a-zA-Z0-9_]+(?:_[a-zA-Z0-9_]+)*)\.json`)
 
 			// Находим все совпадения
 			matches := re.FindAllStringSubmatch(string(output), -1)

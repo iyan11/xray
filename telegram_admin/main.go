@@ -147,6 +147,7 @@ func main() {
 
 func sendMessage(bot *tgbotapi.BotAPI, chatID int64, text string) {
 	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = "Markdown"
 	_, err := bot.Send(msg)
 	if err != nil {
 		log.Printf("Error sending message: %v", err)

@@ -69,7 +69,7 @@ func main() {
 
 		if update.Message.Text == "/start" || update.Message.Text == "/help" {
 			text := "# Добро пожаловать!\n\n## Команды:\n- `/add user <username>`\n- `/link user <username>`\n- `/del user <username>`\n- `/users`"
-			sendMessage(bot, update.Message.Chat.ID, text)
+			sendMessage(bot, update.Message.Chat.ID, text, true)
 			continue
 		} else if strings.HasPrefix(update.Message.Text, "/add user ") {
 			// Извлекаем username из команды
@@ -91,7 +91,7 @@ func main() {
 			// Извлекаем строку начиная с "vless://"
 			textMessage := "Ссылка пользователя:  `" + string(output)[startIndex:] + "`"
 
-			sendMessage(bot, update.Message.Chat.ID, textMessage)
+			sendMessage(bot, update.Message.Chat.ID, textMessage, true)
 
 		} else if strings.HasPrefix(update.Message.Text, "/link user ") {
 			// Извлекаем username из команды
@@ -109,7 +109,7 @@ func main() {
 			// Извлекаем строку начиная с "vless://"
 			textMessage := "Ссылка пользователя:  `" + string(output)[startIndex:] + "`"
 
-			sendMessage(bot, update.Message.Chat.ID, textMessage)
+			sendMessage(bot, update.Message.Chat.ID, textMessage, true)
 		} else if strings.HasPrefix(update.Message.Text, "/del user ") {
 			// Извлекаем username из команды
 			username := strings.TrimPrefix(update.Message.Text, "/del user ")
@@ -117,7 +117,7 @@ func main() {
 			command := "echo Deleting Xray user: " + username + " && cd /root/xray && bash ex.sh del " + username + " && echo Xray user " + username + " deleted"
 			output := sendCommand(bot, update.Message.Chat.ID, command)
 			if output != nil {
-				sendMessage(bot, update.Message.Chat.ID, string(output))
+				sendMessage(bot, update.Message.Chat.ID, string(output), false)
 			}
 		} else if update.Message.Text == "/users" {
 			command := "ls /root/xray/conf"
@@ -135,19 +135,21 @@ func main() {
 				result = append(result, "- "+match[1])
 			}
 
-			sendMessage(bot, update.Message.Chat.ID, strings.Join(result, "\n"))
+			sendMessage(bot, update.Message.Chat.ID, strings.Join(result, "\n"), false)
 		} else {
 			output := sendCommand(bot, update.Message.Chat.ID, update.Message.Text)
 			if output != nil {
-				sendMessage(bot, update.Message.Chat.ID, string(output))
+				sendMessage(bot, update.Message.Chat.ID, string(output), false)
 			}
 		}
 	}
 }
 
-func sendMessage(bot *tgbotapi.BotAPI, chatID int64, text string) {
+func sendMessage(bot *tgbotapi.BotAPI, chatID int64, text string, markdown bool) {
 	msg := tgbotapi.NewMessage(chatID, text)
-	msg.ParseMode = "Markdown"
+	if markdown {
+		msg.ParseMode = "Markdown"
+	}
 	_, err := bot.Send(msg)
 	if err != nil {
 		log.Printf("Error sending message: %v", err)

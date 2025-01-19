@@ -68,7 +68,7 @@ func main() {
 		log.Printf("[Received] From: %d, Command: %s", update.Message.From.ID, update.Message.Text)
 
 		if update.Message.Text == "/start" || update.Message.Text == "/help" {
-			text := "Добро пожаловать!  Команды:  - /add user <username>  - /link user <username>  - /del user <username>  - /users"
+			text := "# Добро пожаловать!\n\n## Команды:\n- `/add user <username>`\n- `/link user <username>`\n- `/del user <username>`\n- `/users`"
 			sendMessage(bot, update.Message.Chat.ID, text)
 			continue
 		} else if strings.HasPrefix(update.Message.Text, "/add user ") {

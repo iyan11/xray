@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -131,11 +132,15 @@ func main() {
 				continue
 			}
 
-			log.Printf(string(output))
+			// Ищем индекс начала строки "vless://"
+			startIndex := strings.Index(string(output), "vless://")
+			if startIndex == -1 {
+				fmt.Println("Prefix 'vless://' not found.")
+				continue
+			}
 
-			prefixText := "jq found\ndon't forget to share misc/customgeo4hiddify.txt or misc/customgeo4nekoray.txt as well\nhere is your link:\n"
-
-			textMessage := strings.TrimPrefix(string(output), prefixText)
+			// Извлекаем строку начиная с "vless://"
+			textMessage := string(output)[startIndex:]
 			// Отправляем результат выполнения команды обратно в Telegram
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ссылка пользователя: `"+textMessage+"`")
 			_, err = bot.Send(msg)

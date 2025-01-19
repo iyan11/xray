@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -57,12 +58,59 @@ func main() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Access denied.")
 			_, err := bot.Send(msg)
 			if err != nil {
-				return
+				log.Printf("Error sending message: %v", err)
 			}
 			continue
 		}
 
 		log.Printf("[Received] From: %d, Command: %s", update.Message.From.ID, update.Message.Text)
+
+		if update.Message.Text == "/start" {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Welcome to the bot!")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Printf("Error sending message: %v", err)
+			}
+			continue
+		}
+
+		// Проверяем, что команда начинается с /add user
+		if strings.HasPrefix(update.Message.Text, "/add user ") {
+			// Извлекаем username из команды
+			username := strings.TrimPrefix(update.Message.Text, "/add user ")
+
+			// Выполняем команду с переданным username
+			cmd := exec.Command("bash", "-c", "echo Adding Xray user: "+username+" && cd /root/xray && bash ex.sh add "+username+" && echo Xray user "+username+" added") // Здесь замените на вашу команду
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				// Если произошла ошибка при выполнении команды, отправляем ее обратно
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
+				_, err := bot.Send(msg)
+				if err != nil {
+					log.Printf("Error sending message: %v", err)
+				}
+				continue
+			}
+
+			//
+			cmd = exec.Command("bash", "-c", "cd /root/xray && bash ex.sh  link conf/config_client_"+username+".json") // Здесь замените на вашу команду
+			output, err = cmd.CombinedOutput()
+			if err != nil {
+				// Если произошла ошибка при выполнении команды, отправляем ее обратно
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
+				_, err := bot.Send(msg)
+				if err != nil {
+					log.Printf("Error sending message: %v", err)
+				}
+				continue
+			}
+			// Отправляем результат выполнения команды обратно в Telegram
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(output))
+			_, err = bot.Send(msg)
+			if err != nil {
+				log.Printf("Error sending message: %v", err)
+			}
+		}
 
 		// Выполняем команду из текста сообщения
 		cmd := exec.Command("bash", "-c", update.Message.Text)
@@ -72,7 +120,7 @@ func main() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
 			_, err := bot.Send(msg)
 			if err != nil {
-				return
+				log.Printf("Error sending message: %v", err)
 			}
 			continue
 		}
@@ -81,7 +129,7 @@ func main() {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(output))
 		_, err = bot.Send(msg)
 		if err != nil {
-			return
+			log.Printf("Error sending message: %v", err)
 		}
 	}
 }
